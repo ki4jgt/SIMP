@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
-from pyglet.gl import *
+
+#Please use this to disable advertisements. It's a great way to keep
+#from screwing supporters by unintentionally mishandling code. Not to
+#mention, it's SUPER easy!
 
 ShowAds = True
-pStatus = False
 
-ver = "SIMP 15.07 ALPHA"
+from pyglet.gl import *
+from os import listdir, system
+
+ver = "SIMP 15.09 ALPHA"
 
 window = pyglet.window.Window(1000, 600, resizable=True, caption = ver)
 icon = pyglet.image.load("Resources/icon.png")
@@ -14,6 +19,16 @@ window.set_icon(icon)
 window.push_handlers(pyglet.window.event.WindowEventLogger())
 window.set_minimum_size(640, 480)
 
+#=============================Variables=================================
+pStatus = False
+
+playlists = []
+
+mode = "PLAYER"
+playlist = ""
+playlistLocation = 0
+
+nplname = ""
 #=============================Functions=================================
 def cpStatus():
 	global pStatus
@@ -29,9 +44,22 @@ def rectCheck(lista, listb, listc):
 	else:
 		return False
 
+def plRefresh():
+	global playlists
+	playlists = listdir("Playlists")
+
+def npl(name):
+	fob = open("Playlists/" + name, "a")
+	fob.close()
+#-----------------------------Bittorrent Functions----------------------
+def download(magnet):
+	system("transmission-cli -er -m -w cache " + magnet)
 #=============================Code======================================
+plRefresh()
+
 @window.event
 def on_draw():
+	global mode
 	glEnable(GL_BLEND)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA) 
 	glClearColor(0.04, 0.04, 0.04, 0.0)
@@ -92,7 +120,7 @@ def on_draw():
 	glEnd()
 	#playlists Menu
 	glBegin(GL_POLYGON)
-	glColor3f(0.0, 0.0, 0.1)
+	glColor3f(0.0, 0.0, 0.05)
 	glVertex2f(5, 250)
 	glVertex2f(5, window.height - 35)
 	glVertex2f(195, window.height - 35)
@@ -104,12 +132,19 @@ def on_draw():
 	glVertex2f(190, 280)
 	glEnd()
 	glBegin(GL_POLYGON)
-	glColor4f(0.0, 0.0, 0.0, 0.5)
+	glColor3f(0.18, 0.18, 0.18)
 	glVertex2f(5, 250)
+	glColor3f(0.0, 0.0, 0.0)
 	glVertex2f(5, 279)
 	glVertex2f(195, 280)
+	glColor3f(0.18, 0.18, 0.18)
 	glVertex2f(195, 250)
 	glEnd()
+	#Playlists Items
+	a = window.height - 40
+	for entry in playlists:
+		pyglet.text.Label(entry, font_name = "Times New Roman", font_size = 12, x = 10, y = a, anchor_x = "left", anchor_y = "top").draw()
+		a = a - 20
 	#New Playlist Label
 	pyglet.text.Label("New Playlist", font_name = "Times New Roman", font_size = 10, x = 65, y = 260).draw()
 	#Playlists Label
@@ -125,17 +160,71 @@ def on_draw():
 		glColor3f(0.02, 0.02, 0.02)
 		glVertex2f(window.width - 20, a)
 		glEnd()
+	#NPL Box
+	if mode == "NPL":
+		glBegin(GL_POLYGON)
+		glColor3f(0.0, 0.0, 0.0)
+		glVertex2f((window.width / 2) - 163, (window.height / 2) - 103)
+		glVertex2f((window.width / 2) - 163, (window.height / 2) + 103)
+		glVertex2f((window.width / 2) + 163, (window.height / 2) + 103)
+		glVertex2f((window.width / 2) + 163, (window.height / 2) - 103)
+		glEnd()
+		glBegin(GL_POLYGON)
+		glColor3f(0.0, 0.0, 0.3)
+		glVertex2f((window.width / 2) - 160, (window.height / 2) - 100)
+		glVertex2f((window.width / 2) - 160, (window.height / 2) + 100)
+		glVertex2f((window.width / 2) + 160, (window.height / 2) + 100)
+		glColor3f(0.0, 0.0, 0.1)
+		glVertex2f((window.width / 2) + 160, (window.height / 2) - 100)
+		glEnd()
+		#NPL Name Box
+		glBegin(GL_POLYGON)
+		glColor3f(0.0, 0.0, 0.0)
+		glVertex2f((window.width / 2) - 152, (window.height / 2) + 20)
+		glVertex2f((window.width / 2) - 152, (window.height / 2) + 62)
+		glVertex2f((window.width / 2) + 152, (window.height / 2) + 62)
+		glVertex2f((window.width / 2) + 152, (window.height / 2) + 20)
+		glEnd()
+		glBegin(GL_POLYGON)
+		glColor3f(0.05, 0.05, 0.05)
+		glVertex2f((window.width / 2) - 150, (window.height / 2) + 20)
+		glVertex2f((window.width / 2) - 150, (window.height / 2) + 60)
+		glVertex2f((window.width / 2) + 150, (window.height / 2) + 60)
+		glVertex2f((window.width / 2) + 150, (window.height / 2) + 20)
+		glEnd()
+		pyglet.text.Label(nplname, font_name="Times New Roman", font_size = 20, x = (window.width / 2) - 145, y = (window.height / 2) + 25, anchor_x = "left", anchor_y = "bottom").draw()
 	#Flush
 	glFlush()
 
 @window.event
 def on_mouse_press(x, y, button, mods):
-	if rectCheck([300, window.height - 101], [364, window.height - 37], [x, y]) == True:	
+	global mode
+	if rectCheck([300, window.height - 101], [364, window.height - 37], [x, y]) and mode == "PLAYER":	
 		cpStatus()
+	if rectCheck([5, 250], [195, 280], [x, y]) and mode == "PLAYER":
+		mode = "NPL"
 
 @window.event
 def on_text(text):
-	if text == " ":
+	global nplname, mode
+	if text == " " and mode == "PLAYER":
 		cpStatus()
+	if mode == "NPL" and text not in ["\r", "/", "\\", "'", "\"", ".", "`", "~", "<", ">", ":", ";"]:
+		nplname = nplname + text
+	if text == "\r" and mode == "NPL":
+		if nplname != "":
+			npl(nplname)
+		nplname = ""
+		mode = "PLAYER"
 
+@window.event
+def on_text_motion(motion):
+	global nplname
+	if motion == 65288 and mode == "NPL":
+		nplname = nplname[:len(nplname) - 1]
+		
+def update(dt):
+	plRefresh()
+		
+pyglet.clock.schedule_interval(update, 1.0)
 pyglet.app.run()
