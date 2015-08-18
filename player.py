@@ -7,7 +7,12 @@
 ShowAds = True
 
 from pyglet.gl import *
-from os import listdir, system
+from os import listdir, system, mkdir
+
+if "Playlists" not in listdir():
+	mkdir("Playlists")
+if "Cache" not in listdir():
+	mkdir("Cache")
 
 ver = "SIMP 15.09 ALPHA"
 
@@ -51,6 +56,13 @@ def plRefresh():
 def npl(name):
 	fob = open("Playlists/" + name, "a")
 	fob.close()
+
+def nplnameseg():
+	global nplname
+	if len(nplname) > 16:
+		return nplname[-16:]
+	else:
+		return nplname
 #-----------------------------Bittorrent Functions----------------------
 def download(magnet):
 	system("transmission-cli -er -m -w cache " + magnet)
@@ -59,7 +71,7 @@ plRefresh()
 
 @window.event
 def on_draw():
-	global mode
+	global mode, nplname
 	glEnable(GL_BLEND)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA) 
 	glClearColor(0.04, 0.04, 0.04, 0.0)
@@ -192,7 +204,7 @@ def on_draw():
 		glVertex2f((window.width / 2) + 150, (window.height / 2) + 60)
 		glVertex2f((window.width / 2) + 150, (window.height / 2) + 20)
 		glEnd()
-		pyglet.text.Label(nplname, font_name="Times New Roman", font_size = 20, x = (window.width / 2) - 145, y = (window.height / 2) + 25, anchor_x = "left", anchor_y = "bottom").draw()
+		pyglet.text.Label(nplnameseg(), font_name="Times New Roman", font_size = 20, x = (window.width / 2) - 145, y = (window.height / 2) + 25, anchor_x = "left", anchor_y = "bottom").draw()
 	#Flush
 	glFlush()
 
