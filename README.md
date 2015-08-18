@@ -1,10 +1,10 @@
 # SIMP - SmashIndex Media Player
 
-SmashIndex Media Player is an open source attempt at Popcorn Time for music consumption.
+SmashIndex Media Player is an open source attempt at Popcorn Time for podcasting.
 
 Requirements for this python file are:
 
 1: python3-libtorrent
 2: python3-pyglet
 
-Pyglet can be installed with "sudo pip3 install pyglet"
+Pyglet can be installed with "sudo pip3 install pyglet
