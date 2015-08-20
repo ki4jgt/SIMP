@@ -4,15 +4,11 @@
 #from screwing supporters by unintentionally mishandling code. Not to
 #mention, it's SUPER easy!
 
-ShowAds = True
+PlayAds = True
 
 from pyglet.gl import *
 from os import listdir, system, mkdir
-
-if "Playlists" not in listdir():
-	mkdir("Playlists")
-if "Cache" not in listdir():
-	mkdir("Cache")
+from pyglet.window import key
 
 ver = "SIMP 15.09 ALPHA"
 
@@ -23,13 +19,15 @@ play = pyglet.image.load("Resources/play.png")
 window.set_icon(icon)
 window.push_handlers(pyglet.window.event.WindowEventLogger())
 window.set_minimum_size(640, 480)
-
+pyglet.font.add_file("Resources/UbuntuMono-R.ttf")
+uMono = pyglet.font.load("Ubuntu Mono")
 #=============================Variables=================================
 pStatus = False
 
+mode = "PLAYER"
+
 playlists = []
 
-mode = "PLAYER"
 playlist = ""
 playlistLocation = 0
 
@@ -51,6 +49,10 @@ def rectCheck(lista, listb, listc):
 
 def plRefresh():
 	global playlists
+	if "Playlists" not in listdir():
+		mkdir("Playlists")
+	if "Cache" not in listdir():
+		mkdir("Cache")
 	playlists = listdir("Playlists")
 
 def npl(name):
@@ -63,6 +65,11 @@ def nplnameseg():
 		return nplname[-16:]
 	else:
 		return nplname
+		
+#-----------------------------Lists' Functions--------------------------
+def retPlaylist():
+	global playlistLocation
+	return playlists[playlistLocation:playlistLocation + int(((window.height - 315) / 20))]
 #-----------------------------Bittorrent Functions----------------------
 def download(magnet):
 	system("transmission-cli -er -m -w cache " + magnet)
@@ -130,7 +137,7 @@ def on_draw():
 	glVertex2f(200, window.height)
 	glVertex2f(200, window.height - 30)
 	glEnd()
-	#playlists Menu
+	#playlists' Menu
 	glBegin(GL_POLYGON)
 	glColor3f(0.0, 0.0, 0.05)
 	glVertex2f(5, 250)
@@ -138,6 +145,12 @@ def on_draw():
 	glVertex2f(195, window.height - 35)
 	glVertex2f(195, 250)
 	glEnd()
+	#Playlists Items
+	a = window.height - 40
+	for entry in retPlaylist():
+		pyglet.text.Label(entry, font_name = "Ubuntu Mono", font_size = 12, x = 10, y = a, anchor_x = "left", anchor_y = "top").draw()
+		a = a - 20
+	#New Playlist Button
 	glBegin(GL_LINES)
 	glColor3f(0.0, 0.0, 0.0)
 	glVertex2f(10, 280)
@@ -152,11 +165,6 @@ def on_draw():
 	glColor3f(0.18, 0.18, 0.18)
 	glVertex2f(195, 250)
 	glEnd()
-	#Playlists Items
-	a = window.height - 40
-	for entry in playlists:
-		pyglet.text.Label(entry, font_name = "Times New Roman", font_size = 12, x = 10, y = a, anchor_x = "left", anchor_y = "top").draw()
-		a = a - 20
 	#New Playlist Label
 	pyglet.text.Label("New Playlist", font_name = "Times New Roman", font_size = 10, x = 65, y = 260).draw()
 	#Playlists Label
@@ -198,30 +206,46 @@ def on_draw():
 		glVertex2f((window.width / 2) + 152, (window.height / 2) + 20)
 		glEnd()
 		glBegin(GL_POLYGON)
-		glColor3f(0.05, 0.05, 0.05)
+		glColor3f(0.04, 0.04, 0.04)
 		glVertex2f((window.width / 2) - 150, (window.height / 2) + 20)
 		glVertex2f((window.width / 2) - 150, (window.height / 2) + 60)
 		glVertex2f((window.width / 2) + 150, (window.height / 2) + 60)
 		glVertex2f((window.width / 2) + 150, (window.height / 2) + 20)
 		glEnd()
+		glBegin(GL_POLYGON)
+		glColor3f(0.1, 0.1, 0.1)
+		glVertex2f((window.width / 2) - 150, (window.height / 2) - 80)
+		glColor3f(0.0, 0.0, 0.0)
+		glVertex2f((window.width / 2) - 150, (window.height / 2) - 30)
+		glVertex2f((window.width / 2) + 150, (window.height / 2) - 30)
+		glColor3f(0.18, 0.18, 0.18)
+		glVertex2f((window.width / 2) + 150, (window.height / 2) - 80)
+		glEnd()
 		pyglet.text.Label(nplnameseg(), font_name="Times New Roman", font_size = 20, x = (window.width / 2) - 145, y = (window.height / 2) + 25, anchor_x = "left", anchor_y = "bottom").draw()
+		pyglet.text.Label(str(len(nplname)) + "/22", font_name="Times New Roman", font_size = 8, x = (window.width / 2) + 145, y = (window.height / 2) - 10, anchor_x = "right", anchor_y = "bottom").draw()
+		pyglet.text.Label("OK", font_name="Times New Roman", font_size = 20, x = (window.width / 2), y = (window.height / 2) - 55, anchor_x = "center", anchor_y = "center").draw()
 	#Flush
 	glFlush()
 
 @window.event
 def on_mouse_press(x, y, button, mods):
-	global mode
+	global mode, nplname
 	if rectCheck([300, window.height - 101], [364, window.height - 37], [x, y]) and mode == "PLAYER":	
 		cpStatus()
 	if rectCheck([5, 250], [195, 280], [x, y]) and mode == "PLAYER":
 		mode = "NPL"
+	if mode == "NPL" and rectCheck([(window.width / 2) - 150, (window.height / 2) - 80], [(window.width / 2) + 150, (window.height / 2) - 30], [x, y]):
+		if nplname != "":
+			npl(nplname)
+		nplname = ""
+		mode = "PLAYER"
 
 @window.event
 def on_text(text):
 	global nplname, mode
 	if text == " " and mode == "PLAYER":
 		cpStatus()
-	if mode == "NPL" and text not in ["\r", "/", "\\", "'", "\"", ".", "`", "~", "<", ">", ":", ";"]:
+	if mode == "NPL" and text not in ["\r", "/", "\\", "\"", ".", "`", "~", "<", ">", ":", ";", "?"] and len(nplname) != 22:
 		nplname = nplname + text
 	if text == "\r" and mode == "NPL":
 		if nplname != "":
@@ -234,6 +258,28 @@ def on_text_motion(motion):
 	global nplname
 	if motion == 65288 and mode == "NPL":
 		nplname = nplname[:len(nplname) - 1]
+
+@window.event
+def on_key_press(symbol, modifiers):
+	global mode
+	if symbol == key.ESCAPE:
+		if mode == "NPL":
+			mode = "PLAYER"
+		return True
+
+@window.event
+def on_mouse_scroll(x, y, dx, dy):
+	global playlistLocation
+	print(playlistLocation)
+	if rectCheck([5, 280], [195, window.height - 35], [x, y]) and mode == "PLAYER":
+		if dy == 1 and retPlaylist()[-1:] != playlists[-1:]:
+			playlistLocation = playlistLocation + 1
+			if playlistLocation > len(playlists) - 1:
+				playlistLocation = len(playlists) - 1
+		if dy == -1:
+			playlistLocation = playlistLocation - 1
+			if playlistLocation < 0:
+				playlistLocation = 0
 		
 def update(dt):
 	plRefresh()
