@@ -60,7 +60,7 @@ def plRefresh():
 		mkdir("Playlists")
 	if "Cache" not in listdir():
 		mkdir("Cache")
-	playlists = listdir("Playlists")
+	playlists = sorted(listdir("Playlists"))
 
 def npl(name):
 	fob = open("Playlists/" + name, "a")
@@ -156,16 +156,16 @@ def on_draw():
 	a = window.height - 40
 	for entry in retPlaylist():
 		if entry == plSelected:
-			glColor3f(0.0, 0.0, 1.0)
 			glBegin(GL_POLYGON)
+			glColor3f(0.0, 0.0, 0.0)
 			glVertex2f(5, a - 20)
-			glVertex2f(5, a)
 			glColor3f(0.0, 0.0, 1.0)
+			glVertex2f(5, a)
 			glVertex2f(195, a)
 			glColor3f(0.0, 0.0, 0.1)
 			glVertex2f(195, a - 20)
 			glEnd()
-		pyglet.text.Label(entry, font_name = "Ubuntu Mono", font_size = 12, x = 10, y = a, anchor_x = "left", anchor_y = "top").draw()
+		pyglet.text.Label(entry, font_name = uMono, font_size = 12, x = 10, y = a, anchor_x = "left", anchor_y = "top").draw()
 		a = a - 20
 	#New Playlist Button
 	glBegin(GL_LINES)
