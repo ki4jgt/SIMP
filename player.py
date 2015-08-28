@@ -11,17 +11,20 @@ pyglet.options["debug_gl"] = False
 pyglet.options["shadow_window"] = False
 from pyglet.gl import *
 from os import listdir, system, mkdir
+from os.path import dirname
 from pyglet.window import key
 from json import dumps, loads
 
 ver = "SIMP 15.09 ALPHA"
 
 window = pyglet.window.Window(1000, 600, resizable = True, caption = ver, vsync = False)
+window.push_handlers(pyglet.window.event.WindowEventLogger())
+# ^ Uncomment for testing
 icon = pyglet.image.load("Resources/icon.png")
 buttons = pyglet.image.load("Resources/playerbuttons.png")
 play = pyglet.image.load("Resources/play.png")
 window.set_icon(icon)
-window.push_handlers(pyglet.window.event.WindowEventLogger())
+window.push_handlers()
 window.set_minimum_size(640, 480)
 pyglet.font.add_file("Resources/UbuntuMono-R.ttf")
 uMono = pyglet.font.load("Ubuntu Mono")
@@ -35,7 +38,7 @@ mode = "PLAYER"
 playlists = []
 playlistLocation = 0
 
-plSelected = "Hak5"
+plSelected = ""
 plCurrent = ""
 
 nplname = ""
@@ -72,7 +75,17 @@ def nplnameseg():
 		return nplname[-16:]
 	else:
 		return nplname
-		
+
+def menItem(y1, y2, y3, step):
+	y2 -= y1
+	y3 -= y1
+	count = -1
+	while y2 > 0:
+		if y3 < y2:
+			count += 1
+		y2 -= step
+	return count
+			
 #-----------------------------Lists' Functions--------------------------
 def retPlaylist():
 	global playlistLocation
@@ -157,40 +170,38 @@ def on_draw():
 	for entry in retPlaylist():
 		if entry == plSelected:
 			glBegin(GL_POLYGON)
-			glColor3f(0.0, 0.0, 0.0)
-			glVertex2f(5, a - 20)
-			glColor3f(0.0, 0.0, 1.0)
-			glVertex2f(5, a)
-			glVertex2f(195, a)
-			glColor3f(0.0, 0.0, 0.1)
-			glVertex2f(195, a - 20)
+			glColor3f(0.0, 0.0, 0.8)
+			glVertex2f(5, a - 19)
+			glVertex2f(5, a + 1)
+			glVertex2f(195, a + 1)
+			glVertex2f(195, a - 19)
 			glEnd()
-		pyglet.text.Label(entry, font_name = uMono, font_size = 12, x = 10, y = a, anchor_x = "left", anchor_y = "top").draw()
-		a = a - 20
+		pyglet.text.Label(entry, font_name = "Ubuntu Mono", font_size = 12, x = 10, y = a, anchor_x = "left", anchor_y = "top").draw()
+		a -= 20
 	#New Playlist Button
 	glBegin(GL_LINES)
 	glColor3f(0.0, 0.0, 0.0)
-	glVertex2f(10, 280)
-	glVertex2f(190, 280)
+	glVertex2f(10, 275)
+	glVertex2f(190, 275)
 	glEnd()
 	glBegin(GL_POLYGON)
 	glColor3f(0.18, 0.18, 0.18)
-	glVertex2f(5, 250)
+	glVertex2f(5, 245)
 	glColor3f(0.0, 0.0, 0.0)
-	glVertex2f(5, 279)
-	glVertex2f(195, 280)
+	glVertex2f(5, 274)
+	glVertex2f(195, 275)
 	glColor3f(0.18, 0.18, 0.18)
-	glVertex2f(195, 250)
+	glVertex2f(195, 245)
 	glEnd()
 	#New Playlist Label
-	pyglet.text.Label("New Playlist", font_name = "Times New Roman", font_size = 10, x = 65, y = 260).draw()
+	pyglet.text.Label("New Playlist", font_name = "Times New Roman", font_size = 10, x = 65, y = 255).draw()
 	#Playlists Label
 	pyglet.text.Label("Playlists", font_name="Times New Roman", font_size = 14, x = 70, y = window.height - 22).draw()
 	#Playlist
 	glLineWidth(2.0)
 	a = window.height - 150
 	while a >= 40:
-		a = a - 40
+		a -= 40
 		glBegin(GL_LINES)
 		glColor3f(0.01, 0.01, 0.01)
 		glVertex2f(220, a)
@@ -246,35 +257,45 @@ def on_draw():
 
 @window.event
 def on_mouse_press(x, y, button, mods):
-	global mode, nplname
-	c = int(ClickClock.update_time())
-	if rectCheck([300, window.height - 101], [364, window.height - 37], [x, y]) and mode == "PLAYER":	
-		cpStatus()
-	if rectCheck([5, 250], [195, 280], [x, y]) and mode == "PLAYER":
-		mode = "NPL"
-	if mode == "NPL" and rectCheck([(window.width / 2) - 150, (window.height / 2) - 80], [(window.width / 2) + 150, (window.height / 2) - 30], [x, y]):
-		if nplname != "":
-			npl(nplname)
-		nplname = ""
-		mode = "PLAYER"
+	global mode, nplname, plSelected, plCurrent
+	c = ClickClock.update_time()
+	if mode == "PLAYER":
+		if rectCheck([270, window.height - 100], [330, window.height - 36], [x, y]):	
+			cpStatus()
+		if rectCheck([5, 250], [195, 280], [x, y]):
+			mode = "NPL"
+		if rectCheck([5, 280], [195, window.height - 35], [x, y]):
+			plSelected = retPlaylist()[menItem(280, window.height - 35, y, 20)]
+			if c < .5:
+				plCurrent = plSelected
+				if pStatus == False:
+					cpStatus()
+	if mode == "NPL":
+		if rectCheck([(window.width / 2) - 150, (window.height / 2) - 80], [(window.width / 2) + 150, (window.height / 2) - 30], [x, y]):
+			if nplname != "":
+				npl(nplname)
+			nplname = ""
+			mode = "PLAYER"
 
 @window.event
 def on_text(text):
 	global nplname, mode
-	if text == " " and mode == "PLAYER":
-		cpStatus()
-	if mode == "NPL" and text not in ["\r", "/", "\\", "\"", ".", "`", "~", "<", ">", ":", ";", "?"] and len(nplname) != 22:
-		nplname = nplname + text
-	if text == "\r" and mode == "NPL":
-		if nplname != "":
-			npl(nplname)
-		nplname = ""
-		mode = "PLAYER"
+	if mode == "PLAYER":
+		if text == " ":
+			cpStatus()
+	if mode == "NPL":
+		if text not in ["\r", "/", "\\", "\"", ".", "`", "~", "<", ">", ":", ";", "?"] and len(nplname) != 22:
+			nplname += text
+		if text == "\r":
+			if nplname != "":
+				npl(nplname)
+			nplname = ""
+			mode = "PLAYER"
 
 @window.event
 def on_text_motion(motion):
 	global nplname
-	if motion == 65288 and mode == "NPL":
+	if motion == key.BACKSPACE and mode == "NPL":
 		nplname = nplname[:len(nplname) - 1]
 
 @window.event
@@ -288,15 +309,16 @@ def on_key_press(symbol, modifiers):
 @window.event
 def on_mouse_scroll(x, y, dx, dy):
 	global playlistLocation
-	if rectCheck([5, 280], [195, window.height - 35], [x, y]) and mode == "PLAYER":
-		if dy == 1 and retPlaylist()[-1:] != playlists[-1:]:
-			playlistLocation = playlistLocation + 1
-			if playlistLocation > len(playlists) - 1:
-				playlistLocation = len(playlists) - 1
-		if dy == -1:
-			playlistLocation = playlistLocation - 1
-			if playlistLocation < 0:
-				playlistLocation = 0
+	if mode == "PLAYER":
+		if rectCheck([5, 280], [195, window.height - 35], [x, y]):
+			if dy == 1 and retPlaylist()[-1:] != playlists[-1:]:
+				playlistLocation += 1
+				if playlistLocation > len(playlists) - 1:
+					playlistLocation = len(playlists) - 1
+			if dy == -1:
+				playlistLocation -= 1
+				if playlistLocation < 0:
+					playlistLocation = 0
 		
 def update(dt):
 	plRefresh()
